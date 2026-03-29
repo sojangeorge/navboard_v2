@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Sign in | NavBoard{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+  <div class="mb-8 text-center">
+    <p class="text-sm uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">Welcome back</p>
+    <h1 class="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">Sign in to your account</h1>
+  </div>
+  <form method="post" class="space-y-5">
+    <label class="block">
+      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Email</span>
+      <input type="email" name="email" required class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Password</span>
+      <input type="password" name="password" required class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+    </label>
+    <button type="submit" class="w-full rounded-2xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">Continue</button>
+  </form>
+  <p class="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">New here? <a href="{{ url_for('auth.register') }}" class="font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400">Create an account</a></p>
+</div>
+{% endblock %}
