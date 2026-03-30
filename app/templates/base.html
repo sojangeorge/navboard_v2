@@ -6,6 +6,7 @@
     <title>{% block title %}NavBoard{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       tailwind.config = { darkMode: 'class' };
       const userPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -36,6 +37,20 @@
             <i data-lucide="home" class="w-5 h-5"></i>
             <span>Dashboard</span>
           </a>
+          <a href="{{ url_for('nav.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800">
+            <i data-lucide="trending-up" class="w-5 h-5"></i>
+            <span>NAV Tracker</span>
+          </a>
+          <a href="{{ url_for('expenses.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800">
+            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+            <span>Expense Tracker</span>
+          </a>
+          {% if not (current_user.is_authenticated and current_user.is_admin) %}
+          <a href="{{ url_for('goals.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800">
+            <i data-lucide="target" class="w-5 h-5"></i>
+            <span>Goals</span>
+          </a>
+          {% endif %}
           <a href="{{ url_for('auth.profile') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800">
             <i data-lucide="user" class="w-5 h-5"></i>
             <span>Profile</span>
@@ -58,7 +73,7 @@
               </button>
               <div>
                 <p class="text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Welcome back</p>
-                <p class="font-semibold">{{ current_user.name if current_user.is_authenticated else 'Guest' }}</p>
+                <p class="font-semibold">{{ current_user.name if current_user.is_authenticated else 'Guest' }}{% if current_user.is_authenticated and current_user.is_admin %} <span class="text-sm font-medium text-slate-500 dark:text-slate-400">(admin)</span>{% endif %}</p>
               </div>
             </div>
 

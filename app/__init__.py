@@ -28,6 +28,9 @@ from .models.user import User
 from .routes.auth import auth_bp
 from .routes.main import main_bp
 from .routes.admin import admin_bp
+from .routes.goals import goals_bp
+from .routes.nav import nav_bp
+from .routes.expenses import expenses_bp
 
 
 def create_app():
@@ -40,6 +43,9 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(goals_bp)
+    app.register_blueprint(nav_bp)
+    app.register_blueprint(expenses_bp)
 
     with app.app_context():
         create_indexes()
@@ -58,3 +64,16 @@ def load_user(user_id):
 def create_indexes():
     mongo.db.users.create_index("user_id", unique=True)
     mongo.db.users.create_index("email", unique=True)
+    mongo.db.goals.create_index("goal_id", unique=True)
+    mongo.db.goals.create_index([("user_id", 1), ("year", 1)])
+    mongo.db.goals.create_index("category")
+    mongo.db.goals.create_index("priority")
+
+    mongo.db.nav_items.create_index("item_id", unique=True)
+    mongo.db.nav_items.create_index("user_id")
+    mongo.db.nav_items.create_index("asset_type")
+    mongo.db.nav_history.create_index([("user_id", 1), ("period", 1)], unique=True)
+
+    mongo.db.expenses.create_index([("user_id", 1), ("category", 1), ("year_month", 1)], unique=True)
+    mongo.db.expense_budgets.create_index([("user_id", 1), ("category", 1)], unique=True)
+    mongo.db.expense_categories.create_index("user_id", unique=True)

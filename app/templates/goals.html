@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% block title %}Goals Tracker | NavBoard{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Goals Tracker</p>
+      <h1 class="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">Plan, progress, repeat</h1>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Manage year-specific goals, recurring quarterly milestones, and rollover unfinished work automatically.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="button" onclick="openGoalModal('create')" class="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        Add goal
+      </button>
+      <form action="{{ url_for('goals.rollover_goals') }}" method="post" class="inline-block">
+        <button type="submit" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          Rollover wizard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="rounded-3xl bg-slate-900/5 p-3 dark:bg-slate-900">
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <a href="{{ url_for('goals.index', tab='year', subcategory=selected_subcategory, due_filter=selected_due_filter) }}" class="rounded-2xl px-4 py-3 text-center text-sm font-semibold {% if selected_tab == 'year' %}bg-slate-950 text-white dark:bg-slate-100 dark:text-slate-950{% else %}bg-white text-slate-600 shadow-sm dark:bg-slate-950/60 dark:text-slate-300{% endif %}">Year-Specific</a>
+      <a href="{{ url_for('goals.index', tab='recurring', subcategory=selected_subcategory, due_filter=selected_due_filter) }}" class="rounded-2xl px-4 py-3 text-center text-sm font-semibold {% if selected_tab == 'recurring' %}bg-slate-950 text-white dark:bg-slate-100 dark:text-slate-950{% else %}bg-white text-slate-600 shadow-sm dark:bg-slate-950/60 dark:text-slate-300{% endif %}">Recurring</a>
+    </div>
+  </div>
+
+  <div class="mt-4 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
+    <div>
+      <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Filter goals</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Show goals by subcategory and due date.</p>
+    </div>
+    <form action="{{ url_for('goals.index') }}" method="get" class="flex flex-wrap items-center gap-3">
+      <input type="hidden" name="tab" value="{{ selected_tab }}">
+      <label class="block">
+        <span class="sr-only">Subcategory</span>
+        <select name="subcategory" class="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+          <option value="">All subcategories</option>
+          {% for item in subcategories %}
+          <option value="{{ item }}" {% if item == selected_subcategory %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="block">
+        <span class="sr-only">Due filter</span>
+        <select name="due_filter" class="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+          <option value="all" {% if selected_due_filter == 'all' %}selected{% endif %}>All due dates</option>
+          <option value="due_soon" {% if selected_due_filter == 'due_soon' %}selected{% endif %}>Due soon</option>
+          <option value="past_due" {% if selected_due_filter == 'past_due' %}selected{% endif %}>Past due</option>
+        </select>
+      </label>
+      <button type="submit" class="rounded-2xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700">Apply</button>
+    </form>
+  </div>
+
+  <section class="grid gap-6">
+    {% if selected_tab == 'year' %}
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {% for goal in year_goals %}
+      <article class="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800 dark:bg-sky-900/30 dark:text-sky-200">{{ goal.subcategory or 'Year-specific' }}</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            {% if goal.due_date %}
+            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {% if goal.due_status == 'past_due' %}bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-200{% elif goal.due_status == 'due_soon' %}bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-200{% else %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200{% endif %}">Due {{ goal.due_date[:10] }}</span>
+            {% endif %}
+            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {% if goal.priority == 'High' %}bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-200{% elif goal.priority == 'Medium' %}bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-200{% else %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200{% endif %}">{{ goal.priority }}</span>
+          </div>
+        </div>
+        <h3 class="mt-4 text-xl font-semibold text-slate-900 dark:text-slate-100">{{ goal.title }}</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{{ goal.description or 'No description added yet.' }}</p>
+        <div class="mt-5 space-y-3">
+          <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+            <span>{{ goal.completed_count }} / {{ goal.total_count }} key results</span>
+            <span>{{ goal.progress_percent }}%</span>
+          </div>
+          <div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-sky-600" style="width: {{ goal.progress_percent }}%"></div>
+          </div>
+        </div>
+        <div class="mt-5 space-y-2">
+          {% for kr in goal.key_results %}
+          <form action="{{ url_for('goals.toggle_key_result', goal_id=goal.goal_id, key_result_id=kr.id) }}?tab=year" method="post" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950">
+            <button type="submit" class="inline-flex h-6 w-6 items-center justify-center rounded-full {% if kr.completed %}bg-emerald-500 text-white{% else %}border border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400{% endif %}">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </button>
+            <span class="truncate {% if kr.completed %}text-slate-500 line-through dark:text-slate-500{% else %}text-slate-700 dark:text-slate-200{% endif %}">{{ kr.title }}</span>
+          </form>
+          {% endfor %}
+        </div>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button type="button" onclick='openGoalModal("edit", {{ goal | tojson }})' class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
+          <form action="{{ url_for('goals.delete_goal', goal_id=goal.goal_id) }}" method="post" class="inline-block">
+            <input type="hidden" name="tab" value="year">
+            <button type="submit" class="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Remove</button>
+          </form>
+        </div>
+      </article>
+      {% endfor %}
+      {% if not year_goals %}
+      <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+        <p class="text-lg font-semibold">No year-specific goals found.</p>
+        <p class="mt-2 text-sm">Create a goal to start tracking your 2026 milestones.</p>
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {% for goal in recurring_goals %}
+      <article class="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-900/30 dark:text-violet-200">{{ goal.quarter or 'Recurring' }}</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            {% if goal.due_date %}
+            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {% if goal.due_status == 'past_due' %}bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-200{% elif goal.due_status == 'due_soon' %}bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-200{% else %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200{% endif %}">Due {{ goal.due_date[:10] }}</span>
+            {% endif %}
+            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {% if goal.priority == 'High' %}bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-200{% elif goal.priority == 'Medium' %}bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-200{% else %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200{% endif %}">{{ goal.priority }}</span>
+          </div>
+        </div>
+        <h3 class="mt-4 text-xl font-semibold text-slate-900 dark:text-slate-100">{{ goal.title }}</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{{ goal.description or 'Quarterly momentum to keep progress moving.' }}</p>
+        <div class="mt-5 space-y-3">
+          <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+            <span>{{ goal.completed_count }} / {{ goal.total_count }} key results</span>
+            <span>{{ goal.progress_percent }}%</span>
+          </div>
+          <div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-violet-600" style="width: {{ goal.progress_percent }}%"></div>
+          </div>
+        </div>
+        <div class="mt-5 space-y-2">
+          {% for kr in goal.key_results %}
+          <form action="{{ url_for('goals.toggle_key_result', goal_id=goal.goal_id, key_result_id=kr.id) }}?tab=recurring" method="post" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950">
+            <button type="submit" class="inline-flex h-6 w-6 items-center justify-center rounded-full {% if kr.completed %}bg-emerald-500 text-white{% else %}border border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400{% endif %}">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </button>
+            <span class="truncate {% if kr.completed %}text-slate-500 line-through dark:text-slate-500{% else %}text-slate-700 dark:text-slate-200{% endif %}">{{ kr.title }}</span>
+          </form>
+          {% endfor %}
+        </div>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button type="button" onclick='openGoalModal("edit", {{ goal | tojson }})' class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
+          <form action="{{ url_for('goals.delete_goal', goal_id=goal.goal_id) }}" method="post" class="inline-block">
+            <input type="hidden" name="tab" value="recurring">
+            <button type="submit" class="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Remove</button>
+          </form>
+        </div>
+      </article>
+      {% endfor %}
+      {% if not recurring_goals %}
+      <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+        <p class="text-lg font-semibold">No recurring goals yet.</p>
+        <p class="mt-2 text-sm">Create a recurring asset to keep quarterly progress on track.</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<div id="goal-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-950/50 p-4">
+  <div class="w-full max-w-2xl overflow-hidden rounded-[2rem] bg-white shadow-2xl dark:bg-slate-950">
+    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+      <div>
+        <h2 id="goal-modal-title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">New goal</h2>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Fill in your goal details and key results.</p>
+      </div>
+      <button type="button" onclick="closeGoalModal()" class="rounded-full p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <form id="goal-form" action="" method="post">
+      <input type="hidden" name="tab" id="goal-tab" value="{{ selected_tab }}">
+      <div class="space-y-5 px-6 py-6">
+        <div class="grid gap-4 lg:grid-cols-2">
+          <label class="block">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Title</span>
+            <input id="goal-title" name="title" type="text" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" required>
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Category</span>
+            <select id="goal-category" name="category" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              <option value="year-specific">Year-Specific</option>
+              <option value="recurring">Recurring</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="block">
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Description</span>
+          <textarea id="goal-description" name="description" rows="3" class="mt-2 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"></textarea>
+        </label>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+          <label class="block">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Due date</span>
+            <input id="goal-due-date" name="due_date" type="date" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Priority</span>
+            <select id="goal-priority" name="priority" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              {% for priority in priorities %}
+              <option value="{{ priority }}">{{ priority }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <div id="year-fields" class="grid gap-4 lg:grid-cols-2">
+          <label class="block">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Subcategory</span>
+            <select id="goal-subcategory" name="subcategory" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              {% for name in subcategories %}
+              <option value="{{ name }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Target year</span>
+            <input id="goal-year" name="year" type="number" min="2020" value="{{ current_year }}" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+          </label>
+        </div>
+
+        <div id="recurring-fields" class="hidden grid gap-4 lg:grid-cols-2">
+          <label class="block">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Quarter</span>
+            <select id="goal-quarter" name="quarter" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              {% for quarter in quarters %}
+              <option value="{{ quarter }}">{{ quarter }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <label class="block">
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Key results</span>
+          <textarea id="goal-key-results" name="key_results" rows="4" placeholder="One key result per line" class="mt-2 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"></textarea>
+        </label>
+      </div>
+      <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-800">
+        <button type="button" onclick="closeGoalModal()" class="rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
+        <button type="submit" class="rounded-2xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700">Save goal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const goalModal = document.getElementById('goal-modal');
+  const goalForm = document.getElementById('goal-form');
+  const goalModalTitle = document.getElementById('goal-modal-title');
+  const goalCategory = document.getElementById('goal-category');
+  const goalDueDate = document.getElementById('goal-due-date');
+  const goalTab = document.getElementById('goal-tab');
+  const yearFields = document.getElementById('year-fields');
+  const recurringFields = document.getElementById('recurring-fields');
+  const goalTitle = document.getElementById('goal-title');
+  const goalDescription = document.getElementById('goal-description');
+  const goalSubcategory = document.getElementById('goal-subcategory');
+  const goalYear = document.getElementById('goal-year');
+  const goalQuarter = document.getElementById('goal-quarter');
+  const goalPriority = document.getElementById('goal-priority');
+  const goalKeyResults = document.getElementById('goal-key-results');
+
+  function openGoalModal(mode, goal = null) {
+    goalForm.reset();
+    if (mode === 'create') {
+      goalModalTitle.textContent = 'Create a new goal';
+      goalForm.action = '{{ url_for('goals.create_goal') }}';
+      goalTab.value = '{{ selected_tab }}';
+      goalCategory.value = 'year-specific';
+      toggleCategoryFields();
+      goalTitle.value = '';
+      goalDescription.value = '';
+      goalDueDate.value = '';
+      goalSubcategory.value = '{{ subcategories[0] }}';
+      goalYear.value = '{{ current_year }}';
+      goalQuarter.value = '{{ quarters[0] }}';
+      goalPriority.value = '{{ priorities[1] }}';
+      goalKeyResults.value = '';
+    } else if (mode === 'edit' && goal) {
+      goalModalTitle.textContent = 'Edit goal';
+      goalForm.action = '{{ url_for('goals.update_goal', goal_id='GOAL_ID_PLACEHOLDER') }}'.replace('GOAL_ID_PLACEHOLDER', goal.goal_id);
+      goalTab.value = '{{ selected_tab }}';
+      goalCategory.value = goal.category;
+      toggleCategoryFields();
+      goalTitle.value = goal.title || '';
+      goalDescription.value = goal.description || '';
+      goalDueDate.value = goal.due_date ? goal.due_date.split('T')[0] : '';
+      goalSubcategory.value = goal.subcategory || '{{ subcategories[0] }}';
+      goalYear.value = goal.year || {{ current_year }};
+      goalQuarter.value = goal.quarter || '{{ quarters[0] }}';
+      goalPriority.value = goal.priority || '{{ priorities[1] }}';
+      goalKeyResults.value = (goal.key_results || []).map(item => item.title).join('\n');
+    }
+    goalModal.classList.remove('hidden');
+  }
+
+  function closeGoalModal() {
+    goalModal.classList.add('hidden');
+  }
+
+  function toggleCategoryFields() {
+    if (goalCategory.value === 'recurring') {
+      yearFields.classList.add('hidden');
+      recurringFields.classList.remove('hidden');
+    } else {
+      yearFields.classList.remove('hidden');
+      recurringFields.classList.add('hidden');
+    }
+  }
+
+  goalCategory.addEventListener('change', toggleCategoryFields);
+  goalModal.addEventListener('click', function (event) {
+    if (event.target === goalModal) {
+      closeGoalModal();
+    }
+  });
+</script>
+{% endblock %}
