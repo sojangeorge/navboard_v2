@@ -14,12 +14,14 @@ nav_bp = Blueprint("nav", __name__, url_prefix="/nav")
 ASSET_TYPE_CHOICES = [
     ("liquid", "Liquid Asset"),
     ("illiquid", "Illiquid Asset"),
+    ("investment", "Investment"),
     ("liability", "Liability"),
 ]
 
 ASSET_TYPE_LABELS = {
     "liquid": "Liquid Assets",
     "illiquid": "Illiquid Assets",
+    "investment": "Investments",
     "liability": "Liabilities",
 }
 
@@ -154,11 +156,13 @@ def convert_to_usd(amount, currency):
 def build_nav_metrics(items):
     liquid_assets = [item for item in items if item["asset_type"] == "liquid"]
     illiquid_assets = [item for item in items if item["asset_type"] == "illiquid"]
+    investments = [item for item in items if item["asset_type"] == "investment"]
     liabilities = [item for item in items if item["asset_type"] == "liability"]
 
     total_liquid = sum(item["amount"] for item in liquid_assets)
     total_illiquid = sum(item["amount"] for item in illiquid_assets)
-    total_assets = total_liquid + total_illiquid
+    total_investments = sum(item["amount"] for item in investments)
+    total_assets = total_liquid + total_illiquid + total_investments
     total_liabilities = sum(item["amount"] for item in liabilities)
     total_nav = total_assets - total_liabilities
     debt_to_asset = (total_liabilities / total_assets * 100) if total_assets > 0 else 0.0
@@ -166,9 +170,11 @@ def build_nav_metrics(items):
     return {
         "liquid_assets": liquid_assets,
         "illiquid_assets": illiquid_assets,
+        "investments": investments,
         "liabilities": liabilities,
         "total_liquid": total_liquid,
         "total_illiquid": total_illiquid,
+        "total_investments": total_investments,
         "total_assets": total_assets,
         "total_liabilities": total_liabilities,
         "total_nav": total_nav,
@@ -289,6 +295,8 @@ def index():
         total_liquid=metrics["total_liquid"],
         total_illiquid=metrics["total_illiquid"],
         total_assets=metrics["total_assets"],
+        total_investments=metrics["total_investments"],
+        investments=metrics["investments"],
         total_liabilities=metrics["total_liabilities"],
         total_nav=metrics["total_nav"],
         debt_to_asset=metrics["debt_to_asset"],

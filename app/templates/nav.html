@@ -30,130 +30,190 @@
 </div>
 
 <div class="mt-6 grid gap-6 xl:grid-cols-2">
-  <section class="space-y-6">
+  <section>
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Liquid Assets</p>
-          <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">${{ total_liquid | round(2) }}</p>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div></div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="showNavTab('liquid')" id="tab-btn-liquid" class="rounded-full border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:border-slate-700">Liquid Assets</button>
+          <button type="button" onclick="showNavTab('illiquid')" id="tab-btn-illiquid" class="rounded-full border border-slate-300 bg-transparent px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Illiquid Assets</button>
+          <button type="button" onclick="showNavTab('investment')" id="tab-btn-investment" class="rounded-full border border-slate-300 bg-transparent px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Investments</button>
+          <button type="button" onclick="showNavTab('liability')" id="tab-btn-liability" class="rounded-full border border-slate-300 bg-transparent px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Liabilities</button>
         </div>
       </div>
-      <div class="mt-6 space-y-3">
-        {% for item in liquid_assets %}
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-          <div class="flex items-center justify-between gap-2">
-            <div>
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.item_name }}</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.category }}</p>
+      <div class="mt-6 space-y-6">
+        <div id="tab-liquid" class="tab-panel">
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Liquid Assets</p>
+                <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">${{ total_liquid | round(2) }}</p>
+              </div>
             </div>
-            <div class="text-right">
-              {% set display_amount = item.original_amount if item.original_amount is defined else item.amount %}
-              {% set display_currency = item.currency if item.currency is defined else 'USD' %}
-              {% if display_currency == 'INR' %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} INR</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
-              {% elif display_currency == 'GOLD' %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} g</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+            <div class="mt-6 space-y-3">
+              {% for item in liquid_assets %}
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.item_name }}</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.category }}</p>
+                  </div>
+                  <div class="text-right">
+                    {% set display_amount = item.original_amount if item.original_amount is defined else item.amount %}
+                    {% set display_currency = item.currency if item.currency is defined else 'USD' %}
+                    {% if display_currency == 'INR' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} INR</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% elif display_currency == 'GOLD' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} g</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% else %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">${{ display_amount | round(2) }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                  <button type="button" onclick='populateNavForm({{ item | tojson }})' class="rounded-2xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
+                  <form action="{{ url_for('nav.delete_item', item_id=item.item_id) }}" method="post" class="inline-block">
+                    <button type="submit" class="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Remove</button>
+                  </form>
+                </div>
+              </div>
               {% else %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">${{ display_amount | round(2) }}</p>
-              {% endif %}
+              <p class="text-sm text-slate-500 dark:text-slate-400">No liquid assets recorded yet.</p>
+              {% endfor %}
             </div>
           </div>
-          <div class="mt-3 flex items-center gap-2">
-            <button type="button" onclick='populateNavForm({{ item | tojson }})' class="rounded-2xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
-            <form action="{{ url_for('nav.delete_item', item_id=item.item_id) }}" method="post" class="inline-block">
-              <button type="submit" class="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Remove</button>
-            </form>
-          </div>
         </div>
-        {% else %}
-        <p class="text-sm text-slate-500 dark:text-slate-400">No liquid assets recorded yet.</p>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Illiquid Assets</p>
-          <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">${{ total_illiquid | round(2) }}</p>
-        </div>
-      </div>
-      <div class="mt-6 space-y-3">
-        {% for item in illiquid_assets %}
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-          <div class="flex items-center justify-between gap-2">
-            <div>
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.item_name }}</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.category }}</p>
+        <div id="tab-illiquid" class="hidden tab-panel">
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Illiquid Assets</p>
+                <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">${{ total_illiquid | round(2) }}</p>
+              </div>
             </div>
-            <div class="text-right">
-              {% set display_amount = item.original_amount if item.original_amount is defined else item.amount %}
-              {% set display_currency = item.currency if item.currency is defined else 'USD' %}
-              {% if display_currency == 'INR' %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} INR</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
-              {% elif display_currency == 'GOLD' %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} g</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+            <div class="mt-6 space-y-3">
+              {% for item in illiquid_assets %}
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.item_name }}</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.category }}</p>
+                  </div>
+                  <div class="text-right">
+                    {% set display_amount = item.original_amount if item.original_amount is defined else item.amount %}
+                    {% set display_currency = item.currency if item.currency is defined else 'USD' %}
+                    {% if display_currency == 'INR' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} INR</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% elif display_currency == 'GOLD' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} g</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% else %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">${{ display_amount | round(2) }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                  <button type="button" onclick='populateNavForm({{ item | tojson }})' class="rounded-2xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
+                  <form action="{{ url_for('nav.delete_item', item_id=item.item_id) }}" method="post" class="inline-block">
+                    <button type="submit" class="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Remove</button>
+                  </form>
+                </div>
+              </div>
               {% else %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">${{ display_amount | round(2) }}</p>
-              {% endif %}
+              <p class="text-sm text-slate-500 dark:text-slate-400">No illiquid assets recorded yet.</p>
+              {% endfor %}
             </div>
           </div>
-          <div class="mt-3 flex items-center gap-2">
-            <button type="button" onclick='populateNavForm({{ item | tojson }})' class="rounded-2xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
-            <form action="{{ url_for('nav.delete_item', item_id=item.item_id) }}" method="post" class="inline-block">
-              <button type="submit" class="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Remove</button>
-            </form>
-          </div>
         </div>
-        {% else %}
-        <p class="text-sm text-slate-500 dark:text-slate-400">No illiquid assets recorded yet.</p>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Liabilities</p>
-          <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">${{ total_liabilities | round(2) }}</p>
-        </div>
-      </div>
-      <div class="mt-6 space-y-3">
-        {% for item in liabilities %}
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-          <div class="flex items-center justify-between gap-2">
-            <div>
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.item_name }}</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.category }}</p>
+        <div id="tab-investment" class="hidden tab-panel">
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Investments</p>
+                <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">${{ total_investments | round(2) }}</p>
+              </div>
             </div>
-            <div class="text-right">
-              {% set display_amount = item.original_amount if item.original_amount is defined else item.amount %}
-              {% set display_currency = item.currency if item.currency is defined else 'USD' %}
-              {% if display_currency == 'INR' %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} INR</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
-              {% elif display_currency == 'GOLD' %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} g</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+            <div class="mt-6 space-y-3">
+              {% for item in investments %}
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.item_name }}</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.category }}</p>
+                  </div>
+                  <div class="text-right">
+                    {% set display_amount = item.original_amount if item.original_amount is defined else item.amount %}
+                    {% set display_currency = item.currency if item.currency is defined else 'USD' %}
+                    {% if display_currency == 'INR' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} INR</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% elif display_currency == 'GOLD' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} g</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% else %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">${{ display_amount | round(2) }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                  <button type="button" onclick='populateNavForm({{ item | tojson }})' class="rounded-2xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
+                  <form action="{{ url_for('nav.delete_item', item_id=item.item_id) }}" method="post" class="inline-block">
+                    <button type="submit" class="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Remove</button>
+                  </form>
+                </div>
+              </div>
               {% else %}
-              <p class="font-semibold text-slate-900 dark:text-slate-100">${{ display_amount | round(2) }}</p>
-              {% endif %}
+              <p class="text-sm text-slate-500 dark:text-slate-400">No investments recorded yet.</p>
+              {% endfor %}
             </div>
           </div>
-          <div class="mt-3 flex items-center gap-2">
-            <button type="button" onclick='populateNavForm({{ item | tojson }})' class="rounded-2xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
-            <form action="{{ url_for('nav.delete_item', item_id=item.item_id) }}" method="post" class="inline-block">
-              <button type="submit" class="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Remove</button>
-            </form>
+        </div>
+        <div id="tab-liability" class="hidden tab-panel">
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Liabilities</p>
+                <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">${{ total_liabilities | round(2) }}</p>
+              </div>
+            </div>
+            <div class="mt-6 space-y-3">
+              {% for item in liabilities %}
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.item_name }}</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.category }}</p>
+                  </div>
+                  <div class="text-right">
+                    {% set display_amount = item.original_amount if item.original_amount is defined else item.amount %}
+                    {% set display_currency = item.currency if item.currency is defined else 'USD' %}
+                    {% if display_currency == 'INR' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} INR</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% elif display_currency == 'GOLD' %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ display_amount | round(2) }} g</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.amount | round(2) }} USD</p>
+                    {% else %}
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">${{ display_amount | round(2) }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                  <button type="button" onclick='populateNavForm({{ item | tojson }})' class="rounded-2xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Edit</button>
+                  <form action="{{ url_for('nav.delete_item', item_id=item.item_id) }}" method="post" class="inline-block">
+                    <button type="submit" class="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Remove</button>
+                  </form>
+                </div>
+              </div>
+              {% else %}
+              <p class="text-sm text-slate-500 dark:text-slate-400">No liabilities recorded yet.</p>
+              {% endfor %}
+            </div>
           </div>
         </div>
-        {% else %}
-        <p class="text-sm text-slate-500 dark:text-slate-400">No liabilities recorded yet.</p>
-        {% endfor %}
       </div>
     </div>
   </section>
@@ -202,22 +262,30 @@
   </section>
 </div>
 
-<div class="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-  <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-    <div>
-      <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">NAV Growth Trend</p>
-      <h2 class="mt-2 text-xl font-semibold text-slate-900 dark:text-slate-100">Compounded Monthly Growth</h2>
-    </div>
-    <p class="text-sm text-slate-500 dark:text-slate-400">Track the direction of your net worth over time.</p>
-  </div>
-  <div class="mt-6">
-    <canvas id="navChart" class="w-full h-96"></canvas>
-  </div>
-</div>
-
 <script>
-  const chartLabels = {{ chart_labels | tojson }};
-  const chartValues = {{ chart_values | tojson }};
+  function showNavTab(tab) {
+    const baseClasses = 'rounded-full border px-4 py-2 text-sm font-semibold';
+    const activeClasses = 'bg-sky-600 border-sky-600 text-white hover:bg-sky-700';
+    const inactiveClasses = 'border-slate-300 bg-transparent text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800';
+    const tabs = ['liquid', 'illiquid', 'investment', 'liability'];
+
+    tabs.forEach(name => {
+      const panel = document.getElementById(`tab-${name}`);
+      const button = document.getElementById(`tab-btn-${name}`);
+
+      if (panel) {
+        panel.classList.toggle('hidden', name !== tab);
+      }
+      if (!button) {
+        return;
+      }
+      if (name === tab) {
+        button.className = `${baseClasses} ${activeClasses}`;
+      } else {
+        button.className = `${baseClasses} ${inactiveClasses}`;
+      }
+    });
+  }
 
   function resetNavForm() {
     document.getElementById('asset-id').value = '';
@@ -239,44 +307,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    const ctx = document.getElementById('navChart').getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(14, 165, 233, 0.35)');
-    gradient.addColorStop(1, 'rgba(56, 189, 248, 0.05)');
-
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: chartLabels,
-        datasets: [{
-          label: 'NAV',
-          data: chartValues,
-          fill: true,
-          backgroundColor: gradient,
-          borderColor: '#0ea5e9',
-          tension: 0.35,
-          pointRadius: 4,
-          pointBackgroundColor: '#0ea5e9',
-        }],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: '#94a3b8' },
-          },
-          y: {
-            grid: { color: 'rgba(148, 163, 184, 0.18)' },
-            ticks: { color: '#94a3b8' },
-          },
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: { mode: 'index', intersect: false },
-        },
-      },
-    });
+    showNavTab('liquid');
   });
 </script>
 {% endblock %}

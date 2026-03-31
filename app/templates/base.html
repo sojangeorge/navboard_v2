@@ -41,10 +41,6 @@
             <i data-lucide="trending-up" class="w-5 h-5"></i>
             <span>NAV Tracker</span>
           </a>
-          <a href="{{ url_for('expenses.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800">
-            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
-            <span>Expense Tracker</span>
-          </a>
           {% if not (current_user.is_authenticated and current_user.is_admin) %}
           <a href="{{ url_for('goals.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800">
             <i data-lucide="target" class="w-5 h-5"></i>
